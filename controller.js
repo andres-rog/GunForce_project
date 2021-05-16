@@ -11,6 +11,7 @@ function keyPressed(key) {
     switch(key) {
         case " ": 
             controller.jump = true;
+            controller.jumpReleased = false;
             break;
         case "ArrowLeft": 
             controller.left = true;

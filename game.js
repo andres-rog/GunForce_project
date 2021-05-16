@@ -3,6 +3,8 @@ const ctx = canvas.getContext("2d");
 let frames = 0;
 let requestID;
 let enemyProjectiles = [];
+let enemiesArray = [];
+let gameOver = false;
 
 class GameObject {
     constructor(positionX, positionY, width, height) {
@@ -19,9 +21,9 @@ class Player extends GameObject {
 
         this.speedX = 0;
         this.speedY = 0;
-        this.gravity = 0.05;
+        this.gravity = 0.03;
         this.gravitySpeed = 0;
-
+        this.hp = 100;
         this.lookingDirection = "right";
         this.oldPositionX = oldPositionX;
         this.oldPositionY = oldPositionY;
@@ -72,30 +74,39 @@ class Player extends GameObject {
         //Collition player with solid objects
         this.findCollitionsWithSolidObjects();
 
+        //check if the player should mover or the camera
+        this.sideScroll();
+
         //------------------------------//
         //--Animation state conditions--//
         //------------------------------//
         //1.- if the player fells the world, game over
-        if (this.positionY > canvas.height-this.height) {
-            console.log("GAME OVER");
+        if (this.positionY > canvas.height && this.hp>0) {
+            this.takeDamage(this.hp);
         }
 
-        //2.- if the player is not on ground and not jumping, switch action as jumping
-        if(Math.abs(player.positionY-this.oldPositionY)>0 && !this.jumping) {
-            this.switchAction("jump");
-            this.jumping=true;
-        }
+        if(this.hp>0) {
+            //2.- if the player is not on ground and not jumping, switch action as jumping
+            if(Math.abs(player.positionY-this.oldPositionY)>1 && !this.jumping) {
+                this.switchAction("jump");
+                this.jumping=true;
+            }
 
-        //3.- if the player is moving and not shoting/jumping, then switch action as walk
-        if((this.speedX<-0.1 || this.speedX>0.1) && this.action!="shootGun" && !this.jumping){
-            this.switchAction("walk");
-        }
+            //3.- if the player is moving and not shoting/jumping, then switch action as walk
+            if((this.speedX<-0.1 || this.speedX>0.1) && this.action!="shootGun" && !this.jumping){
+                this.switchAction("walk");
+            }
 
-        //4.- if the player speed is too low, and is not jumping or shooting
-        if(this.speedX>-0.4 && this.speedX<0.4 && (this.action==="walkingGun" || !this.jumping) && this.action!="stopGun" && this.action!="shootGun") {
-            this.switchAction("idle");
+            //4.- if the player speed is too low, and is not jumping or shooting
+            if(this.speedX>-0.4 && this.speedX<0.4 && (this.action==="walkingGun" || !this.jumping) && this.action!="stopGun" && this.action!="shootGun") {
+                this.switchAction("idle");
+            }
         }
-
+        else if (this.action!=="dying") { //5.- if the player is dead, change to dying
+            this.switchAction("dying");
+            this.speedX=0;
+        }
+ 
         //Draw animation
         if(this.spriteSheetLength>1) {
             //try to set the next sprite based on the frame tick-rate
@@ -106,12 +117,12 @@ class Player extends GameObject {
         }
 
         switch (this.action) {
-            case "Dying":
+            case "dying":
                 if(this.lookingDirection==="right") {
                     ctx.drawImage(this.dyingSpriteSheet,100*this.frameIndex,0,100,100,this.positionX,this.positionY,this.width,this.height);
                 }
                 else {
-                    ctx.drawImage(this.dyingSpriteSheet,100*(this.frameIndex+this.spriteSheetLength),0,100,100,this.positionX,this.positionY,this.width,this.height);
+                    ctx.drawImage(this.dyingSpriteSheet,100*(this.frameIndex+this.spriteSheetLength+1),0,100,100,this.positionX,this.positionY,this.width,this.height);
                 }
                 
                 break;
@@ -174,9 +185,15 @@ class Player extends GameObject {
         if(this.spriteSheetLength>1) {
             //Reset frameIndex if we are at the last frame of the animation
             if(this.frameIndex >= this.spriteSheetLength) {
-                this.frameIndex = 0;
-                //if the player was shooting, return to idle after finished the shot
-                if(this.action==="shootGun") this.switchAction("stopShooting");
+                //if the player was dying, gameover after finishing the animation
+                if(this.action==="dying") {
+                    this.gameOver = true;
+                }
+                else {
+                    this.frameIndex = 0;
+                    //if the player was shooting, return to idle after finished the shot
+                    if(this.action==="shootGun") this.switchAction("stopShooting");
+                }
             }
         }
     }
@@ -186,7 +203,12 @@ class Player extends GameObject {
         //Define the action and the ammount of sprites per spritesheet
         switch (action) {
             case "dying":
-                this.spriteSheetLength = 6;
+                if(this.action!="dying") {
+                    this.action = "dying";
+                    this.spriteSheetLength = 5;
+                    this.frameIndex = 0;
+                    this.currentTick = frames;
+                }
                 break;
             case "idle":
                 if(this.weapon === "gun") {
@@ -200,7 +222,7 @@ class Player extends GameObject {
                 }
                 break;
             case "idleLong":
-                if(this.action!="idleLong") {
+                if(this.action!="idleLong" && this.hp>0) {
                     this.action = "idleLong";
                     this.spriteSheetLength = 19;
 
@@ -253,7 +275,6 @@ class Player extends GameObject {
                 }
                 break;
         }
-       
     }
 
     findCollitionsWithSolidObjects() {
@@ -276,7 +297,6 @@ class Player extends GameObject {
             }
             //if the player is vertically on the same position of this object
             if(this.positionY+this.width > object.positionY && this.positionY+10 < object.positionY+object.height) {
-                //if(frames%30===0) console.log(this.positionX-20 > object.positionX+object.width);
                 //Check for left collition
                 if(this.positionX+this.width-40 > object.positionX && this.oldPositionX+this.width-40 < object.positionX) {
                     this.positionX = this.oldPositionX;
@@ -289,12 +309,25 @@ class Player extends GameObject {
                 }
             }
         });
-        
+    }
+
+    sideScroll() {
+        if(this.positionX+this.width > canvas.width-400 || this.positionX < 100) {
+            this.solidObjects.forEach(object => {
+                this.positionX=this.oldPositionX;
+                object.positionX -= this.speedX;
+            });
+        }
+    }
+
+    takeDamage(damage) {
+        this.hp-=damage;
+        //console.log(this.hp)
     }
 }
 
 class PlayerProjectile extends GameObject {
-    constructor(positionX, positionY, width, height, speedX, speedY, direction, bulletType, solidObjectsArray, bulletSpriteSheet, enemyBulletSpriteSheet) {
+    constructor(positionX, positionY, width, height, speedX, speedY, direction, bulletType, solidObjectsArray, bulletSpriteSheet) {
         super(positionX,positionY,width,height);
         this.speedX = speedX;
         this.speedY = speedY;
@@ -302,9 +335,7 @@ class PlayerProjectile extends GameObject {
         this.bulletType = bulletType
         this.bulletSpriteSheet = new Image();
         this.bulletSpriteSheet.src = bulletSpriteSheet;
-        this.enemyBulletSpriteSheet = new Image();
-        this.enemyBulletSpriteSheet.src = enemyBulletSpriteSheet;
-        this.collition = "";
+        this.collition = false;
         this.solidObjects = solidObjectsArray;
         this.frameIndex = 1;
         this.destroy=false;
@@ -314,7 +345,7 @@ class PlayerProjectile extends GameObject {
         this.positionX+=this.speedX;
         this.findCollitions();
 
-        if(this.collition === "") {
+        if(!this.collition) {
             if(this.direction==="right") {
                 ctx.drawImage(this.bulletSpriteSheet,0,0,100,100,this.positionX+50,this.positionY+20,this.width,this.height);
             }
@@ -322,7 +353,7 @@ class PlayerProjectile extends GameObject {
                 ctx.drawImage(this.bulletSpriteSheet,100*41,0,100,100,this.positionX,this.positionY+20,this.width,this.height);
             }
         }
-        else if(this.collition==="solid") {
+        else{
             if(this.direction==="right") {
                 ctx.drawImage(this.bulletSpriteSheet,100*this.frameIndex,0,100,100,this.positionX+50,this.positionY+20,this.width,this.height);
                 this.frameIndex++;
@@ -334,23 +365,10 @@ class PlayerProjectile extends GameObject {
                 if(this.frameIndex > 40) this.destroy=true;
             }
         }
-        else if(this.collition==="enemy") {
-            if(this.direction==="right") {
-                ctx.drawImage(this.enemyBulletSpriteSheet,100*this.frameIndex,0,100,100,this.positionX+50,this.positionY+20,this.width,this.height);
-                this.frameIndex++;
-                if(this.frameIndex > 40) this.destroy=true;
-            }
-            else {
-                ctx.drawImage(this.enemyBulletSpriteSheet,100*(this.frameIndex+40),0,100,100,this.positionX,this.positionY+20,this.width,this.height);
-                this.frameIndex++;
-                if(this.frameIndex > 40) this.destroy=true;
-            }
-        }
-
     }
 
     findCollitions(){
-        if(this.collition === "") {
+        if(!this.collition) {
             //Search for collitions with solid objects
             this.solidObjects.forEach(object => {
                 if(this.positionX < object.positionX+object.width && 
@@ -358,26 +376,38 @@ class PlayerProjectile extends GameObject {
                     this.positionY+40 < object.positionY + object.height &&
                     this.positionY + this.height-40 > object.positionY) {
                         this.positionX-=this.speedX;
-                        this.collition="solid";
+                        this.collition=true;
                         this.speedX=0;
                     }
             });
 
             //Search for collitions with enemies
+            enemiesArray.forEach(enemy => {
+                if(enemy.hp>0 && this.positionX < enemy.positionX+enemy.width-37 && 
+                    this.positionX + this.width+40 > enemy.positionX+37 &&
+                    this.positionY+40 < enemy.positionY + enemy.height &&
+                    this.positionY + this.height-40 > enemy.positionY) {
+                        enemy.takeDamage(1);
+                        this.positionX-=this.speedX;
+                        this.collition=true;
+                        this.speedX=0;
+                    }
+            });
         }
     }
 }
 
 class EnemyProjectile extends GameObject {
-    constructor(positionX, positionY, width, height, speedX, speedY, direction, bulletType, solidObjectsArray, enemyBulletSpriteSheet) {
+    constructor(positionX, positionY, width, height, speedX, speedY, direction, bulletDamage, player, solidObjectsArray, enemyBulletSpriteSheet) {
         super(positionX,positionY,width,height);
         this.speedX = speedX;
         this.speedY = speedY;
         this.direction=direction;
-        this.bulletType = bulletType
+        this.bulletDamage = bulletDamage
+        this.player = player;
         this.enemyBulletSpriteSheet = new Image();
         this.enemyBulletSpriteSheet.src = enemyBulletSpriteSheet;
-        this.collition = "";
+        this.collition = false;
         this.solidObjects = solidObjectsArray;
         this.frameIndex = 1;
         this.destroy=false;
@@ -387,7 +417,7 @@ class EnemyProjectile extends GameObject {
         this.positionX+=this.speedX;
         this.findCollitions();
 
-        if(this.collition === "") {
+        if(!this.collition) {
             if(this.direction==="right") {
                 ctx.drawImage(this.enemyBulletSpriteSheet,0,0,100,100,this.positionX+50,this.positionY+20,this.width,this.height);
             }
@@ -395,7 +425,7 @@ class EnemyProjectile extends GameObject {
                 ctx.drawImage(this.enemyBulletSpriteSheet,100*41,0,100,100,this.positionX,this.positionY+20,this.width,this.height);
             }
         }
-        else if(this.collition==="solid") {
+        else {
             if(this.direction==="right") {
                 ctx.drawImage(this.enemyBulletSpriteSheet,100*this.frameIndex,0,100,100,this.positionX+50,this.positionY+20,this.width,this.height);
                 this.frameIndex++;
@@ -407,43 +437,38 @@ class EnemyProjectile extends GameObject {
                 if(this.frameIndex > 40) this.destroy=true;
             }
         }
-        else if(this.collition==="enemy") {
-            if(this.direction==="right") {
-                ctx.drawImage(this.enemyBulletSpriteSheet,100*this.frameIndex,0,100,100,this.positionX+50,this.positionY+20,this.width,this.height);
-                this.frameIndex++;
-                if(this.frameIndex > 40) this.destroy=true;
-            }
-            else {
-                ctx.drawImage(this.enemyBulletSpriteSheet,100*(this.frameIndex+40),0,100,100,this.positionX,this.positionY+20,this.width,this.height);
-                this.frameIndex++;
-                if(this.frameIndex > 40) this.destroy=true;
-            }
-        }
-
     }
 
     findCollitions(){
-        if(this.collition === "") {
+        if(!this.collition) {
             //Search for collitions with solid objects
             this.solidObjects.forEach(object => {
                 if(this.positionX < object.positionX+object.width && 
                     this.positionX + this.width+40 > object.positionX &&
                     this.positionY+45 < object.positionY + object.height &&
                     this.positionY + this.height-45 > object.positionY) {
-                        this.positionX-=this.speedX;
-                        this.collition="solid";
+                        this.positionX-=this.speedX; //back to original position
+                        this.collition=true;
                         this.speedX=0;
                     }
             });
-
             //Search for collision with player
+            if(player.hp > 0 && this.positionX < this.player.positionX+player.width-30 &&
+               this.positionX+this.width+40 > this.player.positionX+40 &&
+               this.positionY+40 < this.player.positionY + this.player.height &&
+               this.positionY + this.height-45 > this.player.positionY) {
+                   this.positionX-=this.speedX; //back to original position
+                   this.collition=true;
+                   this.speedX=0;
+                   player.takeDamage(this.bulletDamage);
+            }
 
         }
     }
 }
 
 class SoldierEnemy extends GameObject {
-    constructor(positionX, positionY, width, height, player, patrolDistanceTarget, sightLength, speedX, alertSpriteSheet, dyingSpriteSheet, idleSpriteSheet, walkingSpritesheet, shootSpriteSheet) {
+    constructor(positionX, positionY, width, height, hp, player, patrolDistanceTarget, sightLength, speedX, alertSpriteSheet, dyingSpriteSheet, idleSpriteSheet, walkingSpritesheet, shootSpriteSheet) {
         super(positionX,positionY,width,height);
 
         this.player=player;
@@ -451,7 +476,9 @@ class SoldierEnemy extends GameObject {
         this.patrolledDistance = 0;
         this.speedX = speedX;
         this.speedXbackup = speedX;
-        //this.speedX = 0;
+        this.hp = hp;
+        this.maxHp = hp;
+        this.dead=false;
         this.lookingDirection = "right";
         this.sightLength = sightLength;
 
@@ -471,6 +498,7 @@ class SoldierEnemy extends GameObject {
         this.spriteSheetLength = 4;
         this.currentTick = 0;
         this.ammo=3;
+        this.maxAmmo=3;
     }
 
     draw() {
@@ -482,36 +510,46 @@ class SoldierEnemy extends GameObject {
             this.lookingDirection="left";
         }
 
-        //Set the enemy position position
-        this.positionX += this.speedX;
-        this.patrolledDistance += Math.abs(this.speedX);
+        if(this.hp>0) {
+            //Set the enemy position position
+            this.positionX += this.speedX;
+            this.patrolledDistance += Math.abs(this.speedX);
 
-        //try to find player
-        this.findPlayer();
+            //try to find player
+            this.findPlayer();
 
-        //if the patrolled distance exceeds the patrolled distance target, then change the moving direction
-        if(this.patrolledDistance >= this.patrolDistance) {
-            this.patrolledDistance=0;
-            this.speedX*=-1;
+            //if the patrolled distance exceeds the patrolled distance target, then change the moving direction
+            if(this.patrolledDistance >= this.patrolDistance) {
+                this.patrolledDistance=0;
+                this.speedX*=-1;  
+            }
         }
-        
+        else {
+            this.speedX=0;
+            this.switchAction("dying");
+        }
+
+        //Draw lifebar
+        ctx.fillStyle = 'red';
+        ctx.fillRect(this.positionX+20, this.positionY, 60 * this.hp/this.maxHp, 10);
+
         //Draw animation
         if(this.spriteSheetLength>1) {
             //try to set the next sprite based on the frame tick-rate
             if(frames-this.currentTick > 12) {
                 this.frameIndex++;
                 this.currentTick = frames;
-                if(this.action==="shoot" && this.frameIndex===2) this.shoot();
             }
         }
 
         switch (this.action) {
-            case "Dying":
+            case "dying":
                 if(this.lookingDirection==="right") {
                     ctx.drawImage(this.dyingSpriteSheet,100*this.frameIndex,0,100,100,this.positionX,this.positionY,this.width,this.height);
+                    this.frameIndex
                 }
                 else {
-                    ctx.drawImage(this.dyingSpriteSheet,100*(this.frameIndex+this.spriteSheetLength),0,100,100,this.positionX,this.positionY,this.width,this.height);
+                    ctx.drawImage(this.dyingSpriteSheet,100*(this.frameIndex+this.spriteSheetLength+1),0,100,100,this.positionX,this.positionY,this.width,this.height);
                 }
                 
                 break;
@@ -548,6 +586,7 @@ class SoldierEnemy extends GameObject {
                 else {
                     ctx.drawImage(this.shootSpriteSheet,100*(this.frameIndex+this.spriteSheetLength),0,100,100,this.positionX,this.positionY,this.width,this.height);
                 }
+                if(frames-this.currentTick === 12 && this.action==="shoot" && this.frameIndex===1 ) this.shoot();
                 break;
         }
 
@@ -563,7 +602,7 @@ class SoldierEnemy extends GameObject {
                 else if(this.action==="shoot") {
                     if(this.ammo<=0) { //Empty ammo, back to patrol
                         this.switchAction("patrolling");
-                        this.ammo=3;
+                        this.ammo=this.maxAmmo;
                         if(this.lookingDirection==="right") {
                             this.speedX=this.speedXbackup;
                         }
@@ -573,16 +612,24 @@ class SoldierEnemy extends GameObject {
                         
                     }
                 }
+                else if(this.action==="dying") {
+                    this.dead=true;
+                }
             }
         }
-        //console.log(this.action);
     }
     //Switch enemy action
     switchAction(action) {
         //Define the action and the ammount of sprites per spritesheet
         switch (action) {
             case "dying":
-                this.spriteSheetLength = 6;
+                if(this.action!="dying") {
+                    this.action="dying";
+                    this.spriteSheetLength = 4;
+
+                    this.frameIndex = 0;
+                    this.currentTick = frames;
+                }       
                 break;
             case "idle":
                 if(this.action!="idle") {
@@ -631,7 +678,7 @@ class SoldierEnemy extends GameObject {
                 if(this.positionX+this.width+this.sightLength > player.positionX &&
                     this.positionX < player.positionX &&
                     this.positionY < player.positionY+player.height &&
-                    this.positionY+this.height/4 > player.positionY ) {
+                    this.positionY+this.height/2 > player.positionY ) {
                     this.speedX=0;
                     this.switchAction("alert");
                 }
@@ -640,7 +687,7 @@ class SoldierEnemy extends GameObject {
                 if(this.positionX-this.sightLength < player.positionX+player.width &&
                     this.positionX > player.positionX &&
                     this.positionY < player.positionY+player.height &&
-                    this.positionY+this.height/4 > player.positionY ) {
+                    this.positionY+this.height/2 > player.positionY ) {
                         this.speedX=0;
                     this.switchAction("alert");
                 }
@@ -649,8 +696,13 @@ class SoldierEnemy extends GameObject {
     }
 
     shoot() {
-        invokeEnemyBullet("type1",this.lookingDirection, this.positionX, this.positionY);
+        invokeEnemyBullet(10,this.lookingDirection, this.positionX, this.positionY, this.player);
         this.ammo--;
+    }
+
+    takeDamage(damage) {
+        this.hp-=damage;
+        //console.log(this.hp)
     }
 }
 
@@ -671,8 +723,8 @@ class solidObject extends GameObject {
     }
 }
 
-function invokeEnemyBullet(bulletType, lookingDirection, posX, posY) {
+function invokeEnemyBullet(bulletDamage, lookingDirection, posX, posY, player) {
     let bulletSpeed=4;
     if(lookingDirection==="left") bulletSpeed *= -1;
-    enemyProjectiles.push(new EnemyProjectile(posX,posY+5,100,100,bulletSpeed,0,lookingDirection,bulletType,solidObjects,"Game Assets/Images/Sprites/EnemyBullet/spritesheet.png"));
+    enemyProjectiles.push(new EnemyProjectile(posX,posY+5,100,100,bulletSpeed,0,lookingDirection,10,player,solidObjects,"Game Assets/Images/Sprites/EnemyBullet/spritesheet.png"));
 }
