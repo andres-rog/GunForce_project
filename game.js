@@ -2,9 +2,14 @@ const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 let frames = 0;
 let requestID;
-let enemyProjectiles = [];
-let enemiesArray = [];
 let gameOver = false;
+
+//objects arrays
+let nonSolidObjects;
+let solidObjects;
+let enemiesArray;
+let playerProjectiles;
+let enemyProjectiles;
 
 class GameObject {
     constructor(positionX, positionY, width, height) {
@@ -16,18 +21,18 @@ class GameObject {
 }
 
 class Player extends GameObject {
-    constructor(positionX, positionY, width, height, oldPositionX, oldPositionY, solidObjectsArray, dyingSpriteSheet, idleGunSpriteSheet, idleLongSpriteSheet, jumpingGunSpriteSheet, stopGunSpriteSheet, walkingGunSpritesheet, shootGunSpriteSheet) {
+    constructor(positionX, positionY, width, height, oldPositionX, oldPositionY, dyingSpriteSheet, idleGunSpriteSheet, idleLongSpriteSheet, jumpingGunSpriteSheet, stopGunSpriteSheet, walkingGunSpritesheet, shootGunSpriteSheet) {
         super(positionX,positionY,width,height);
 
         this.speedX = 0;
         this.speedY = 0;
-        this.gravity = 0.03;
+        this.gravity = 0.05;
         this.gravitySpeed = 0;
         this.hp = 100;
+        this.maxHp = this.hp;
         this.lookingDirection = "right";
         this.oldPositionX = oldPositionX;
         this.oldPositionY = oldPositionY;
-        this.solidObjects = solidObjectsArray;
 
         this.dyingSpriteSheet = new Image();
         this.dyingSpriteSheet.src = dyingSpriteSheet;
@@ -74,8 +79,10 @@ class Player extends GameObject {
         //Collition player with solid objects
         this.findCollitionsWithSolidObjects();
 
-        //check if the player should mover or the camera
-        this.sideScroll();
+        //if the player is trying to walk outside boundaries, scroll the enviroment instead
+        if(this.positionX+this.width > canvas.width-400 || this.positionX < 100) {
+            this.sideScroll();
+        }
 
         //------------------------------//
         //--Animation state conditions--//
@@ -278,17 +285,19 @@ class Player extends GameObject {
     }
 
     findCollitionsWithSolidObjects() {
-        this.solidObjects.forEach(object => {
+        solidObjects.forEach(object => {
             //if the player is horizontally on the same position of this object
-            if(this.positionX+this.width-20 > object.positionX && this.positionX+20 < object.positionX+object.width) {
+            if(this.positionX+this.width-41 > object.positionX && this.positionX+41 < object.positionX+object.width) {
                 //Check for bottom collition
                 if(this.positionY+10 < object.positionY+object.height && this.oldPositionY+10 > object.positionY+object.height) {
+                    if(object.type === "spikes" || object.type==="flippedSpikes") this.takeDamage(this.hp);
                     this.positionY = this.oldPositionY;
                     this.speedY=0;
                     this.gravitySpeed=0;
                 }
-                 //check for top collition
+                //check for top collition
                 else if(this.positionY+this.height > object.positionY && this.oldPositionY+this.height < object.positionY) {
+                    if(object.type === "spikes" || object.type==="flippedSpikes") this.takeDamage(this.hp);
                     this.positionY = this.oldPositionY;
                     this.speedY=0;
                     this.gravitySpeed=0;
@@ -296,14 +305,16 @@ class Player extends GameObject {
                 }
             }
             //if the player is vertically on the same position of this object
-            if(this.positionY+this.width > object.positionY && this.positionY+10 < object.positionY+object.height) {
+            if(this.positionY+this.height > object.positionY && this.positionY+10 < object.positionY+object.height) {
                 //Check for left collition
                 if(this.positionX+this.width-40 > object.positionX && this.oldPositionX+this.width-40 < object.positionX) {
+                    if(object.type === "spikes" || object.type==="flippedSpikes") this.takeDamage(this.hp);
                     this.positionX = this.oldPositionX;
                     this.speedX=0;
                 }
                 //check for right collition
                 if(this.positionX+40 < object.positionX+object.width && this.oldPositionX+40 > object.positionX+object.width) {
+                    if(object.type === "spikes" || object.type==="flippedSpikes") this.takeDamage(this.hp);
                     this.positionX = this.oldPositionX;
                     this.speedX=0;
                 }
@@ -312,12 +323,25 @@ class Player extends GameObject {
     }
 
     sideScroll() {
-        if(this.positionX+this.width > canvas.width-400 || this.positionX < 100) {
-            this.solidObjects.forEach(object => {
-                this.positionX=this.oldPositionX;
-                object.positionX -= this.speedX;
-            });
-        }
+        //Move player back to original x position
+        this.positionX=this.oldPositionX;
+        //Move solid objects
+        solidObjects.forEach(object => {
+            object.positionX -= this.speedX;
+        });
+        //Move non-solid objects
+        //...
+        //Move enemies
+        enemiesArray.forEach(enemy => {
+            enemy.positionX -= this.speedX;
+        });
+        //Move bullets
+        playerProjectiles.forEach(proyectile => {
+            proyectile.positionX -= this.speedX;
+        });
+        enemyProjectiles.forEach(proyectile => {
+            proyectile.positionX -= this.speedX;
+        });
     }
 
     takeDamage(damage) {
@@ -327,7 +351,7 @@ class Player extends GameObject {
 }
 
 class PlayerProjectile extends GameObject {
-    constructor(positionX, positionY, width, height, speedX, speedY, direction, bulletType, solidObjectsArray, bulletSpriteSheet) {
+    constructor(positionX, positionY, width, height, speedX, speedY, direction, bulletType, bulletSpriteSheet) {
         super(positionX,positionY,width,height);
         this.speedX = speedX;
         this.speedY = speedY;
@@ -336,7 +360,6 @@ class PlayerProjectile extends GameObject {
         this.bulletSpriteSheet = new Image();
         this.bulletSpriteSheet.src = bulletSpriteSheet;
         this.collition = false;
-        this.solidObjects = solidObjectsArray;
         this.frameIndex = 1;
         this.destroy=false;
     }
@@ -370,7 +393,7 @@ class PlayerProjectile extends GameObject {
     findCollitions(){
         if(!this.collition) {
             //Search for collitions with solid objects
-            this.solidObjects.forEach(object => {
+            solidObjects.forEach(object => {
                 if(this.positionX < object.positionX+object.width && 
                     this.positionX + this.width+40 > object.positionX &&
                     this.positionY+40 < object.positionY + object.height &&
@@ -398,7 +421,7 @@ class PlayerProjectile extends GameObject {
 }
 
 class EnemyProjectile extends GameObject {
-    constructor(positionX, positionY, width, height, speedX, speedY, direction, bulletDamage, player, solidObjectsArray, enemyBulletSpriteSheet) {
+    constructor(positionX, positionY, width, height, speedX, speedY, direction, bulletDamage, player, enemyBulletSpriteSheet) {
         super(positionX,positionY,width,height);
         this.speedX = speedX;
         this.speedY = speedY;
@@ -408,7 +431,6 @@ class EnemyProjectile extends GameObject {
         this.enemyBulletSpriteSheet = new Image();
         this.enemyBulletSpriteSheet.src = enemyBulletSpriteSheet;
         this.collition = false;
-        this.solidObjects = solidObjectsArray;
         this.frameIndex = 1;
         this.destroy=false;
     }
@@ -442,7 +464,7 @@ class EnemyProjectile extends GameObject {
     findCollitions(){
         if(!this.collition) {
             //Search for collitions with solid objects
-            this.solidObjects.forEach(object => {
+            solidObjects.forEach(object => {
                 if(this.positionX < object.positionX+object.width && 
                     this.positionX + this.width+40 > object.positionX &&
                     this.positionY+45 < object.positionY + object.height &&
@@ -716,8 +738,35 @@ class solidObject extends GameObject {
 
     draw() {
         switch (this.type) {
-            case "platform1":
-                ctx.drawImage(this.image,160,220,95,100,this.positionX,this.positionY,this.width,this.height);
+            case "platform1_1":
+                ctx.drawImage(this.image,160,220,95,33,this.positionX,this.positionY,this.width,this.height);
+                break;
+            case "platform1_2":
+                ctx.drawImage(this.image,160,256,95,43,this.positionX,this.positionY,this.width,this.height);
+                break;
+            case "platform1_3":
+                ctx.drawImage(this.image,160,300,95,20,this.positionX,this.positionY,this.width,this.height);
+                break;
+            case "waterPlatform1_1":
+                ctx.drawImage(this.image,353,97,94,33,this.positionX,this.positionY,this.width,this.height);
+                break;
+            case "waterPlatform1_2":
+                ctx.drawImage(this.image,353,130,94,43,this.positionX,this.positionY,this.width,this.height);
+                break;
+            case "waterPlatform1_3":
+                ctx.drawImage(this.image,353,173,94,20,this.positionX,this.positionY,this.width,this.height);
+                break;
+            case "platform2":
+                ctx.drawImage(this.image,160,513,94,27,this.positionX,this.positionY,this.width,this.height);
+                break;
+            case "wall":
+                ctx.drawImage(this.image,35,513,27,32,this.positionX,this.positionY,this.width,this.height);
+                break;
+            case "spikes":
+                ctx.drawImage(this.image,417,459,31,21,this.positionX,this.positionY,this.width,this.height);
+                break;
+            case "flippedSpikes":
+                ctx.drawImage(this.image,289,513,31,21,this.positionX,this.positionY,this.width,this.height);
                 break;
         }
     }
@@ -726,5 +775,5 @@ class solidObject extends GameObject {
 function invokeEnemyBullet(bulletDamage, lookingDirection, posX, posY, player) {
     let bulletSpeed=4;
     if(lookingDirection==="left") bulletSpeed *= -1;
-    enemyProjectiles.push(new EnemyProjectile(posX,posY+5,100,100,bulletSpeed,0,lookingDirection,10,player,solidObjects,"Game Assets/Images/Sprites/EnemyBullet/spritesheet.png"));
+    enemyProjectiles.push(new EnemyProjectile(posX,posY+5,100,100,bulletSpeed,0,lookingDirection,10,player,"Game Assets/Images/Sprites/EnemyBullet/spritesheet.png"));
 }
