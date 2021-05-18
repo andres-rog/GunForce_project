@@ -13,36 +13,35 @@ let enemyProjectiles;
 
 //Audio
 const continueSound = new Audio("Game Assets/Sounds/Continue.wav");
-continueSound.volume=0.3;
+continueSound.volume=0;
 
 const dryShotSound = new Audio("Game Assets/Sounds/DryShot.wav");
-dryShotSound.volume=0.04;
+dryShotSound.volume=0;
 
 const reloadStart = new Audio("Game Assets/Sounds/Reload1.wav");
-reloadStart.volume=0.2;
+reloadStart.volume=0;
 
 const reloadFinish = new Audio("Game Assets/Sounds/Reload2.wav");
-reloadFinish.volume=0.2;
-
+reloadFinish.volume=0;
 
 const enemyAlertSound = new Audio("Game Assets/Sounds/EnemyAlert.wav");
-enemyAlertSound.volume=0.07;
+enemyAlertSound.volume=0;
 
 const enemyShotSound = new Audio("Game Assets/Sounds/EnemyShot.mp3");
-enemyShotSound.volume=0.15;
+enemyShotSound.volume=0;
 
 const gameOverSound = new Audio("Game Assets/Sounds/GameOver.wav");
-gameOverSound.volume=0.4;
+gameOverSound.volume=0;
 
 const lightShotSound = new Audio("Game Assets/Sounds/LightShot.wav");
-lightShotSound.volume = 0.25;
+lightShotSound.volume = 0;
 
 const menuMusicSound = new Audio("Game Assets/Sounds/MenuMusic.mp3");
-menuMusicSound.volume=0.5;
+menuMusicSound.volume=0;
 menuMusicSound.loop=true;
 
 const gameMusic = new Audio("Game Assets/Sounds/GameMusic.mp3");
-gameMusic.volume=0.4;
+gameMusic.volume=0;
 gameMusic.loop=true;
 //gameMusic.play();
 
@@ -267,6 +266,7 @@ class Player extends GameObject {
             case "dying":
                 if(this.action!="dying") {
                     this.action = "dying";
+                    gameOverSound.play();
                     this.spriteSheetLength = 5;
                     this.frameIndex = 0;
                     this.currentTick = frames;

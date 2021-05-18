@@ -1,3 +1,5 @@
+let mute=true;
+
 //Controls conditions
 let canJump;
 let playerProjectileTick;
@@ -14,6 +16,8 @@ const ammobar = new Image();
 ammobar.src = "Game Assets/Images/Sprites/Ui Sprites/ammoSpritesheet.png";
 const ammoicon = new Image();
 ammoicon.src = "Game Assets/Images/Sprites/Ui Sprites/AmmoIcon.png";
+const volumeicon = new Image();
+volumeicon.src = "Game Assets/Images/Sprites/Ui Sprites/Volume.png";
 
 const player = new Player(
   401, 100,
@@ -55,8 +59,8 @@ function update(){
       if(player.speedX<0.4 && player.action!="shootGun") {
         player.switchAction("walk");
       }
-      if(player.jumping) player.speedX+=0.3;
-      else player.speedX+=0.5;
+      if(player.jumping) player.speedX+=0.2;
+      else player.speedX+=0.35;
 
       //Reset idle timer
       longIdleTick = frames;
@@ -137,6 +141,10 @@ function update(){
   ctx.drawImage(ammobar, Math.ceil(player.ammo/(player.maxAmmo/5))*192, 0,192,64,100,110,215,64);
   ctx.drawImage(ammoicon,15,112,76,60);
 
+  //Draw volume icon
+  if(mute) ctx.drawImage(volumeicon,0,0,300,512,1480,10,59,100);
+  else ctx.drawImage(volumeicon,0,0,512,512,1480,10,100,100);
+
   //Update last frame playerPositions
   player.oldPositionX = player.positionX;
   player.oldPositionY = player.positionY;
@@ -182,7 +190,6 @@ function update(){
   }
   else {
     console.log("gameover");
-    gameOverSound.play();
   }
 }
 
@@ -225,7 +232,8 @@ function setup() {
   enemyProjectiles=[];
 
   //Set player conditions
-  player.hp=100; 
+  player.hp=100;
+  player.ammo=15;
   player.gameOver=false;
   player.oldPositionX = 401;
   player.oldPositionY = 100;
@@ -240,8 +248,8 @@ function setup() {
   player.speedY=0;
 
   //Create enemies
-  createEnemy(550,405,120,120,7,1,"Range Enemy 2",180,0.7,300);
-  createEnemy(1150,405,120,120,7,1,"Range Enemy 1",180,0.7,300);
+  createEnemy(550,405,120,120,7,1,"Range Enemy 2",180,0.7,500);
+  createEnemy(1150,405,120,120,7,3,"Range Enemy 1",180,0.7,300);
 
   //Create map
   createSolidObject("platform2",200,650,200,60);
@@ -264,7 +272,43 @@ start();
 //Secret debug controls
 addEventListener("keyup", (e) => {
   if(e.key==="g" && player.gameOver) {
-    asd();
+    setup();
     update();
+  }
+});
+
+//Click coordinates
+canvas.addEventListener('mousedown', function(e) {
+  if(e.clientX > 1480 && e.clientY<100) {
+    if(mute) {
+      continueSound.volume=0.3;
+      dryShotSound.volume=0.04;
+      reloadStart.volume=0.2;
+      reloadFinish.volume=0.2;
+      enemyAlertSound.volume=0.07;
+      enemyShotSound.volume=0.15;
+      gameOverSound.volume=0.2;
+      lightShotSound.volume = 0.25;
+      lightShotSound.volume = 0.25;
+      menuMusicSound.volume=0.5;
+      gameMusic.volume=0.4;
+      gameMusic.play();
+      mute=false;
+    }
+    else {
+      continueSound.volume=0;
+      dryShotSound.volume=0;
+      reloadStart.volume=0;
+      reloadFinish.volume=0;
+      enemyAlertSound.volume=0;
+      enemyShotSound.volume=0;
+      gameOverSound.volume=0;
+      lightShotSound.volume = 0;
+      lightShotSound.volume = 0;
+      menuMusicSound.volume=0;
+      gameMusic.volume=0;
+      gameMusic.pause();
+      mute=true;
+    }
   }
 });
