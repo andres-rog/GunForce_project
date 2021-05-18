@@ -11,6 +11,44 @@ let enemiesArray;
 let playerProjectiles;
 let enemyProjectiles;
 
+//Audio
+const continueSound = new Audio("Game Assets/Sounds/Continue.wav");
+continueSound.volume=0.3;
+
+const dryShotSound = new Audio("Game Assets/Sounds/DryShot.wav");
+dryShotSound.volume=0.04;
+
+const reloadStart = new Audio("Game Assets/Sounds/Reload1.wav");
+reloadStart.volume=0.2;
+
+const reloadFinish = new Audio("Game Assets/Sounds/Reload2.wav");
+reloadFinish.volume=0.2;
+
+
+const enemyAlertSound = new Audio("Game Assets/Sounds/EnemyAlert.wav");
+enemyAlertSound.volume=0.07;
+
+const enemyShotSound = new Audio("Game Assets/Sounds/EnemyShot.mp3");
+enemyShotSound.volume=0.15;
+
+const gameOverSound = new Audio("Game Assets/Sounds/GameOver.wav");
+gameOverSound.volume=0.4;
+
+const lightShotSound = new Audio("Game Assets/Sounds/LightShot.wav");
+lightShotSound.volume = 0.25;
+
+const menuMusicSound = new Audio("Game Assets/Sounds/MenuMusic.mp3");
+menuMusicSound.volume=0.5;
+menuMusicSound.loop=true;
+
+const gameMusic = new Audio("Game Assets/Sounds/GameMusic.mp3");
+gameMusic.volume=0.4;
+gameMusic.loop=true;
+//gameMusic.play();
+
+const startGameSound  = new Audio("Game Assets/Sounds/Startgame.wav");
+startGameSound.volume=0.3;
+
 class GameObject {
     constructor(positionX, positionY, width, height) {
         this.positionX = positionX;
@@ -21,7 +59,7 @@ class GameObject {
 }
 
 class Player extends GameObject {
-    constructor(positionX, positionY, width, height, oldPositionX, oldPositionY, dyingSpriteSheet, idleGunSpriteSheet, idleLongSpriteSheet, jumpingGunSpriteSheet, stopGunSpriteSheet, walkingGunSpritesheet, shootGunSpriteSheet) {
+    constructor(positionX, positionY, width, height, oldPositionX, oldPositionY, dyingSpriteSheet, idleGunSpriteSheet, idleLongSpriteSheet, jumpingGunSpriteSheet, stopGunSpriteSheet, walkingGunSpritesheet, shootGunSpriteSheet, reloadGunSpriteSheet) {
         super(positionX,positionY,width,height);
 
         this.speedX = 0;
@@ -30,6 +68,8 @@ class Player extends GameObject {
         this.gravitySpeed = 0;
         this.hp = 100;
         this.maxHp = this.hp;
+        this.ammo=15;
+        this.maxAmmo=this.ammo;
         this.lookingDirection = "right";
         this.oldPositionX = oldPositionX;
         this.oldPositionY = oldPositionY;
@@ -44,6 +84,8 @@ class Player extends GameObject {
         this.jumpingGunSpriteSheet.src = jumpingGunSpriteSheet;
         this.stopGunSpriteSheet = new Image();
         this.stopGunSpriteSheet.src = stopGunSpriteSheet;
+        this.reloadGunSpriteSheet = new Image();
+        this.reloadGunSpriteSheet.src = reloadGunSpriteSheet;
         this.walkingGunSpritesheet = new Image();
         this.walkingGunSpritesheet.src = walkingGunSpritesheet;
         this.shootGunSpriteSheet = new Image();
@@ -105,7 +147,7 @@ class Player extends GameObject {
             }
 
             //4.- if the player speed is too low, and is not jumping or shooting
-            if(this.speedX>-0.4 && this.speedX<0.4 && (this.action==="walkingGun" || !this.jumping) && this.action!="stopGun" && this.action!="shootGun") {
+            if(this.speedX>-0.4 && this.speedX<0.4 && (this.action==="walkingGun" || !this.jumping) && this.action!="stopGun" && this.action!="shootGun" && this.action!="gunReload") {
                 this.switchAction("idle");
             }
         }
@@ -184,7 +226,14 @@ class Player extends GameObject {
                 else {
                     ctx.drawImage(this.shootGunSpriteSheet,100*(this.frameIndex+this.spriteSheetLength+1),0,100,100,this.positionX,this.positionY,this.width,this.height);
                 }
-                
+                break;
+            case "gunReload":
+                if(this.lookingDirection === "right") {
+                    ctx.drawImage(this.reloadGunSpriteSheet,100*this.frameIndex,0,100,100,this.positionX,this.positionY,this.width,this.height);
+                }
+                else {
+                    ctx.drawImage(this.reloadGunSpriteSheet,100*(this.frameIndex+this.spriteSheetLength),0,100,100,this.positionX,this.positionY,this.width,this.height);
+                }
                 break;
         }
 
@@ -200,6 +249,12 @@ class Player extends GameObject {
                     this.frameIndex = 0;
                     //if the player was shooting, return to idle after finished the shot
                     if(this.action==="shootGun") this.switchAction("stopShooting");
+                    //If the player was reloading, replenish the ammo
+                    if(this.action==="gunReload") {
+                        this.switchAction("stopShooting");
+                        this.ammo=this.maxAmmo;
+                        reloadFinish.play();
+                    }
                 }
             }
         }
@@ -276,6 +331,17 @@ class Player extends GameObject {
                         this.action = "shootGun";
                         this.spriteSheetLength = 3;
 
+                        this.frameIndex = 0;
+                        this.currentTick = frames;
+                    }
+                }
+                break;
+            case "reload":
+                if(this.weapon === "gun") {
+                    if(this.action!="gunReload") {
+                        this.action = "gunReload";
+                        this.spriteSheetLength = 9;
+    
                         this.frameIndex = 0;
                         this.currentTick = frames;
                     }
@@ -490,7 +556,7 @@ class EnemyProjectile extends GameObject {
 }
 
 class SoldierEnemy extends GameObject {
-    constructor(positionX, positionY, width, height, hp, player, patrolDistanceTarget, sightLength, speedX, alertSpriteSheet, dyingSpriteSheet, idleSpriteSheet, walkingSpritesheet, shootSpriteSheet) {
+    constructor(positionX, positionY, width, height, hp, ammo, type, player, patrolDistanceTarget, sightLength, speedX, alertSpriteSheet, dyingSpriteSheet, idleSpriteSheet, walkingSpritesheet, shootSpriteSheet) {
         super(positionX,positionY,width,height);
 
         this.player=player;
@@ -519,8 +585,10 @@ class SoldierEnemy extends GameObject {
         this.frameIndex = 0;
         this.spriteSheetLength = 4;
         this.currentTick = 0;
-        this.ammo=3;
-        this.maxAmmo=3;
+        this.ammo=ammo;
+        this.maxAmmo=this.ammo;
+
+        this.type=type;
     }
 
     draw() {
@@ -684,7 +752,7 @@ class SoldierEnemy extends GameObject {
                 if(this.action!="alert") {
                     this.action = "alert";
                     this.spriteSheetLength = 2;
-
+                    enemyAlertSound.play();
                     this.frameIndex = 0;
                     this.currentTick = frames+20;
                 }
@@ -718,7 +786,10 @@ class SoldierEnemy extends GameObject {
     }
 
     shoot() {
-        invokeEnemyBullet(10,this.lookingDirection, this.positionX, this.positionY, this.player);
+        if(this.type==="Range Enemy 1") invokeEnemyBullet(4,this.lookingDirection, this.positionX, this.positionY, this.player);
+        if(this.type==="Range Enemy 2") invokeEnemyBullet(6,this.lookingDirection, this.positionX, this.positionY, this.player);
+        enemyShotSound.currentTime=0;
+        enemyShotSound.play();
         this.ammo--;
     }
 
@@ -772,8 +843,7 @@ class solidObject extends GameObject {
     }
 }
 
-function invokeEnemyBullet(bulletDamage, lookingDirection, posX, posY, player) {
-    let bulletSpeed=4;
+function invokeEnemyBullet(bulletSpeed, lookingDirection, posX, posY, player) {
     if(lookingDirection==="left") bulletSpeed *= -1;
     enemyProjectiles.push(new EnemyProjectile(posX,posY+5,100,100,bulletSpeed,0,lookingDirection,10,player,"Game Assets/Images/Sprites/EnemyBullet/spritesheet.png"));
 }

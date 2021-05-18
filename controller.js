@@ -5,6 +5,7 @@ const controller = {
     jumpReleased: true,
     fire: false,
     fireReleased: true,
+    reload: false,
 }
 
 function keyPressed(key) {
@@ -22,6 +23,9 @@ function keyPressed(key) {
         case "z": 
             controller.fire = true;
             controller.fireReleased = false;
+            break;
+        case "x": 
+            controller.reload = true;
             break;
     }
 };
@@ -41,6 +45,9 @@ function keyReleased(key) {
         case "z": 
             controller.fire = false;
             controller.fireReleased = true;
+            break;
+        case "x": 
+            controller.reload = false;
             break;
     }
 };
