@@ -5,11 +5,14 @@ let requestID;
 let gameOver = false;
 
 //objects arrays
-let nonSolidObjects;
-let solidObjects;
-let enemiesArray;
-let playerProjectiles;
-let enemyProjectiles;
+let nonSolidObjects=[];
+let solidObjects=[];
+let enemiesArray=[];
+let playerProjectiles=[];
+let enemyProjectiles=[];
+let clouds=[];
+let sky=[];
+let water=[];
 
 //Audio
 const continueSound = new Audio("Game Assets/Sounds/Continue.wav");
@@ -43,10 +46,12 @@ menuMusicSound.loop=true;
 const gameMusic = new Audio("Game Assets/Sounds/GameMusic.mp3");
 gameMusic.volume=0;
 gameMusic.loop=true;
-//gameMusic.play();
 
 const startGameSound  = new Audio("Game Assets/Sounds/Startgame.wav");
 startGameSound.volume=0.3;
+
+const pauseGameSound = new Audio ("Game Assets/Sounds/Pause.wav");
+pauseGameSound.volume = 0;
 
 class GameObject {
     constructor(positionX, positionY, width, height) {
@@ -73,22 +78,14 @@ class Player extends GameObject {
         this.oldPositionX = oldPositionX;
         this.oldPositionY = oldPositionY;
 
-        this.dyingSpriteSheet = new Image();
-        this.dyingSpriteSheet.src = dyingSpriteSheet;
-        this.idleGunSpriteSheet = new Image();
-        this.idleGunSpriteSheet.src = idleGunSpriteSheet;
-        this.idleLongSpriteSheet = new Image();
-        this.idleLongSpriteSheet.src = idleLongSpriteSheet;
-        this.jumpingGunSpriteSheet = new Image();
-        this.jumpingGunSpriteSheet.src = jumpingGunSpriteSheet;
-        this.stopGunSpriteSheet = new Image();
-        this.stopGunSpriteSheet.src = stopGunSpriteSheet;
-        this.reloadGunSpriteSheet = new Image();
-        this.reloadGunSpriteSheet.src = reloadGunSpriteSheet;
-        this.walkingGunSpritesheet = new Image();
-        this.walkingGunSpritesheet.src = walkingGunSpritesheet;
-        this.shootGunSpriteSheet = new Image();
-        this.shootGunSpriteSheet.src = shootGunSpriteSheet;
+        this.dyingSpriteSheet = dyingSpriteSheet;
+        this.idleGunSpriteSheet = idleGunSpriteSheet;
+        this.idleLongSpriteSheet = idleLongSpriteSheet;
+        this.jumpingGunSpriteSheet = jumpingGunSpriteSheet;
+        this.stopGunSpriteSheet = stopGunSpriteSheet;
+        this.reloadGunSpriteSheet = reloadGunSpriteSheet;
+        this.walkingGunSpritesheet = walkingGunSpritesheet;
+        this.shootGunSpriteSheet = shootGunSpriteSheet;
 
         this.weapon = "gun";
         this.action = "jumpingGun";
@@ -371,7 +368,7 @@ class Player extends GameObject {
                 }
             }
             //if the player is vertically on the same position of this object
-            if(this.positionY+this.height > object.positionY && this.positionY+10 < object.positionY+object.height) {
+            if(this.positionY+this.height-10 > object.positionY && this.positionY+10 < object.positionY+object.height) {
                 //Check for left collition
                 if(this.positionX+this.width-40 > object.positionX && this.oldPositionX+this.width-40 < object.positionX) {
                     if(object.type === "spikes" || object.type==="flippedSpikes") this.takeDamage(this.hp);
@@ -396,7 +393,19 @@ class Player extends GameObject {
             object.positionX -= this.speedX;
         });
         //Move non-solid objects
-        //...
+        nonSolidObjects.forEach(object => {
+            object.positionX -= this.speedX;
+        });
+        //Move background objects
+        sky.forEach(object => {
+            object.positionX -= this.speedX;
+        });
+        clouds.forEach(object => {
+            object.positionX -= this.speedX;
+        });
+        water.forEach(object => {
+            object.positionX -= this.speedX;
+        });
         //Move enemies
         enemiesArray.forEach(enemy => {
             enemy.positionX -= this.speedX;
@@ -422,9 +431,8 @@ class PlayerProjectile extends GameObject {
         this.speedX = speedX;
         this.speedY = speedY;
         this.direction=direction;
-        this.bulletType = bulletType
-        this.bulletSpriteSheet = new Image();
-        this.bulletSpriteSheet.src = bulletSpriteSheet;
+        this.bulletType = bulletType;
+        this.bulletSpriteSheet = bulletSpriteSheet;
         this.collition = false;
         this.frameIndex = 1;
         this.destroy=false;
@@ -494,8 +502,7 @@ class EnemyProjectile extends GameObject {
         this.direction=direction;
         this.bulletDamage = bulletDamage
         this.player = player;
-        this.enemyBulletSpriteSheet = new Image();
-        this.enemyBulletSpriteSheet.src = enemyBulletSpriteSheet;
+        this.enemyBulletSpriteSheet = enemyBulletSpriteSheet;
         this.collition = false;
         this.frameIndex = 1;
         this.destroy=false;
@@ -570,16 +577,11 @@ class SoldierEnemy extends GameObject {
         this.lookingDirection = "right";
         this.sightLength = sightLength;
 
-        this.alertSpriteSheet = new Image();
-        this.alertSpriteSheet.src = alertSpriteSheet;
-        this.dyingSpriteSheet = new Image();
-        this.dyingSpriteSheet.src = dyingSpriteSheet;
-        this.idleSpriteSheet = new Image();
-        this.idleSpriteSheet.src = idleSpriteSheet;
-        this.walkingSpritesheet = new Image();
-        this.walkingSpritesheet.src = walkingSpritesheet;
-        this.shootSpriteSheet = new Image();
-        this.shootSpriteSheet.src = shootSpriteSheet;
+        this.alertSpriteSheet = alertSpriteSheet;
+        this.dyingSpriteSheet = dyingSpriteSheet;
+        this.idleSpriteSheet = idleSpriteSheet;
+        this.walkingSpritesheet = walkingSpritesheet;
+        this.shootSpriteSheet = shootSpriteSheet;
 
         this.action = "patrolling";
         this.frameIndex = 0;
@@ -799,11 +801,10 @@ class SoldierEnemy extends GameObject {
     }
 }
 
-class solidObject extends GameObject {
+class enviromentObject extends GameObject {
     constructor(positionX, positionY, width, height, type, environmentSpriteSheet) {
         super(positionX,positionY,width,height);
-        this.image = new Image();
-        this.image.src = environmentSpriteSheet;
+        this.image = environmentSpriteSheet;
         this.type = type;
     }
 
@@ -839,11 +840,48 @@ class solidObject extends GameObject {
             case "flippedSpikes":
                 ctx.drawImage(this.image,289,513,31,21,this.positionX,this.positionY,this.width,this.height);
                 break;
+            case "tree1":
+                ctx.drawImage(this.image,0,210,92,110,this.positionX,this.positionY,this.width,this.height);
+                break;
+            case "tree2":
+                ctx.drawImage(this.image,63,0,62,100,this.positionX,this.positionY,this.width,this.height);
+                break;
+            case "tree3":
+                ctx.drawImage(this.image,65,98,62,94,this.positionX,this.positionY,this.width,this.height);
+                break;
+            case "arrowSign":
+                ctx.drawImage(this.image,129,192,30,33,this.positionX,this.positionY,this.width,this.height);
+                break;
+            case "lampost":
+                ctx.drawImage(this.image,95,320,32,65,this.positionX,this.positionY,this.width,this.height);
+                break;
+        }
+    }
+}
+
+class backgroundObject extends GameObject {
+    constructor(positionX, positionY, width, height, type, sprite) {
+        super(positionX,positionY,width,height);
+        this.image = sprite;
+        this.type = type;
+    }
+
+    draw() {
+        switch (this.type) {
+            case "sky":
+                ctx.drawImage(this.image,this.positionX,this.positionY,this.width,this.height);
+                break;
+            case "clouds":
+                ctx.drawImage(this.image,this.positionX,this.positionY,this.width,this.height);
+                break;
+            case "water":
+                ctx.drawImage(this.image,this.positionX,this.positionY,this.width,this.height);
+                break;
         }
     }
 }
 
 function invokeEnemyBullet(bulletSpeed, lookingDirection, posX, posY, player) {
     if(lookingDirection==="left") bulletSpeed *= -1;
-    enemyProjectiles.push(new EnemyProjectile(posX,posY+5,100,100,bulletSpeed,0,lookingDirection,10,player,"Game Assets/Images/Sprites/EnemyBullet/spritesheet.png"));
+    enemyProjectiles.push(new EnemyProjectile(posX,posY+5,100,100,bulletSpeed,0,lookingDirection,10,player,loadedImages["Game Assets/Images/Sprites/EnemyBullet/spritesheet.png"]));
 }
