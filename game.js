@@ -14,6 +14,7 @@ let clouds=[];
 let sky=[];
 let water=[];
 
+
 //Audio
 const continueSound = new Audio("Game Assets/Sounds/Continue.wav");
 continueSound.volume=0;
@@ -52,6 +53,9 @@ startGameSound.volume=0;
 
 const pauseGameSound = new Audio ("Game Assets/Sounds/Pause.wav");
 pauseGameSound.volume = 0;
+
+const winSound = new Audio ("Game Assets/Sounds/WinSound.mp3");
+winSound.volume = 0;
 
 class GameObject {
     constructor(positionX, positionY, width, height) {
@@ -410,6 +414,8 @@ class Player extends GameObject {
         enemiesArray.forEach(enemy => {
             enemy.positionX -= this.speedX;
         });
+        //Move Heli
+        heli.positionX-=this.speedX;
         //Move bullets
         playerProjectiles.forEach(proyectile => {
             proyectile.positionX -= this.speedX;
@@ -850,7 +856,7 @@ class enviromentObject extends GameObject {
                 ctx.drawImage(this.image,65,98,62,94,this.positionX,this.positionY,this.width,this.height);
                 break;
             case "arrowSign":
-                ctx.drawImage(this.image,129,192,30,33,this.positionX,this.positionY,this.width,this.height);
+                ctx.drawImage(this.image,129,193,30,33,this.positionX,this.positionY,this.width,this.height);
                 break;
             case "lampost":
                 ctx.drawImage(this.image,95,320,32,65,this.positionX,this.positionY,this.width,this.height);
@@ -878,6 +884,18 @@ class backgroundObject extends GameObject {
                 ctx.drawImage(this.image,this.positionX,this.positionY,this.width,this.height);
                 break;
         }
+    }
+}
+
+class Heli extends GameObject {
+    constructor(positionX, positionY, width, height, type, heliImage) {
+        super(positionX,positionY,width,height);
+        this.image = heliImage;
+        this.type = type;
+    }
+
+    draw() {
+        ctx.drawImage(this.image,this.positionX,this.positionY,this.width,this.height);
     }
 }
 

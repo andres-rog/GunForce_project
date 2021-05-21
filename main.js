@@ -30,7 +30,8 @@ let images = [
   "Game Assets/Images/Sprites/Range Enemy 2/Idle/spritesheet.png",
   "Game Assets/Images/Sprites/Range Enemy 2/Walking/spritesheet.png",
   "Game Assets/Images/Sprites/Range Enemy 2/Shooting/spritesheet.png",
-  "Game Assets/Images/Sprites/Enviroment/water.png"
+  "Game Assets/Images/Sprites/Enviroment/water.png",
+  "Game Assets/Images/Sprites/Enviroment/heli.png"
 ]
 let loadedImages={};
 
@@ -40,6 +41,9 @@ const player = new Player(
   120, 120,
   100, 100,
 );
+
+//Heli object
+const heli = new Heli(5000,500,288,96);
 
 //Game toggles
 let mute=true;
@@ -196,7 +200,12 @@ function update(){
     }    
   }
 
-  //Draw background objects
+  //Draw heli
+  heli.draw();
+  if(heli.positionX<=canvas.width-600){
+    win=true;
+    winSound.play();
+  }
 
   //Draw non interactable objects
   nonSolidObjects.forEach(object => {
@@ -269,7 +278,7 @@ function update(){
     }
   });
 
-  if(requestID && !player.gameOver && !pause){
+  if(requestID && !player.gameOver && !pause && !win){
      requestID = requestAnimationFrame(update);
   }
   else {
@@ -290,6 +299,16 @@ function update(){
       ctx.font = "150px ArcadeClassic";
       //ctx.font = "150px Arial";
       ctx.fillText("PAUSE", 800, 450);
+    }
+    else if(win) {
+      ctx.drawImage(darkOverlay,0,0,canvas.width,canvas.height);
+      ctx.fillStyle = 'white';
+      ctx.font = "100px ArcadeClassic";
+      //ctx.font = "100px Arial";
+      ctx.fillText("MISSION COMPLETE!", 800, 350);
+      ctx.font = "70px ArcadeClassic";
+      //ctx.font = "70px Arial";
+      ctx.fillText("Press 's' to play again", 800, 550);
     }
     
   }
@@ -335,6 +354,8 @@ function createEnemy(posX, posY, width, height, hp, ammo, type, patrolDistanceTa
 }
 
 function initialScrenSetup() {
+  //Give heli image
+  heli.image = loadedImages["Game Assets/Images/Sprites/Enviroment/heli.png"];
   //Give player spritesheets
   player.dyingSpriteSheet = loadedImages["Game Assets/Images/Sprites/Player Character/Dying/spritesheet.png"],
   player.idleGunSpriteSheet = loadedImages["Game Assets/Images/Sprites/Player Character/IdleGun/spritesheet.png"],
@@ -404,6 +425,7 @@ function gameSetup() {
   canJump = true;
   playerProjectileTick = 0;
   longIdleTick = 0;
+  win=false;
 
   //Clear arrays
   nonSolidObjects=[];
@@ -415,6 +437,10 @@ function gameSetup() {
   sky=[];
   clouds=[];
   water=[];
+
+  //Set heli position
+  heli.positionX=5600;
+  heli.positionY=430;
 
   //Set player conditions
   player.hp=100;
@@ -463,6 +489,10 @@ function gameSetup() {
   createSolidObject("platform1_1",90,850,200,70);
   createSolidObject("platform1_1",270,850,200,70);
   createSolidObject("platform1_1",460,850,200,70);
+  
+  //Decorations
+  createNonSolidObject("tree1",440,620,170,250);
+  createNonSolidObject("arrowSign",300,790,70,70);
 
   //Water
   createWaterObjects(660,850,200,70);
@@ -488,7 +518,7 @@ function gameSetup() {
 
 
   //Enemies
-  //createEnemy(550,405,120,120,7,1,"Range Enemy 2",180,0.7,500);
+  createEnemy(1270,380,120,120,5,1,"Range Enemy 2",110,0.7,500);
   createEnemy(170,535,120,120,7,3,"Range Enemy 1",110,0.7,300);
 
   //--SECTION 2--
@@ -505,11 +535,16 @@ function gameSetup() {
   createSolidObject("platform1_1",2404,830,200,70);
 
   //Enemies
-  /*createEnemy(1600,520,120,120,4,1,"Range Enemy 2",160,0.7,500);
+  createEnemy(1600,520,120,120,4,1,"Range Enemy 2",160,0.7,500);
   createEnemy(2320,715,120,120,4,1,"Range Enemy 2",200,0.7,500);
   createEnemy(2200,715,120,120,4,3,"Range Enemy 2",200,0.7,300);
-  createEnemy(2000,715,120,120,7,3,"Range Enemy 1",200,0.7,300);*/
+  createEnemy(2000,715,120,120,7,3,"Range Enemy 1",200,0.7,300);
 
+  //Decorations
+  createNonSolidObject("tree2",1670,430,160,230);
+  createNonSolidObject("lampost",2024,690,70,150);
+  createNonSolidObject("tree1",2404,600,170,250);
+  
   //--SECTION 3--
   //water
   createWaterObjects(2594,850,300,105);
@@ -539,9 +574,9 @@ function gameSetup() {
   createSolidObject("waterPlatform1_2",3450,310,200,70);
   createSolidObject("waterPlatform1_1",3450,240,200,70);
 
-  createSolidObject("waterPlatform1_3",3700,810,200,70);
-  createSolidObject("waterPlatform1_2",3700,740,200,70);
-  createSolidObject("waterPlatform1_1",3700,670,200,70);
+  createSolidObject("waterPlatform1_3",3700,825,200,70);
+  createSolidObject("waterPlatform1_2",3700,755,200,70);
+  createSolidObject("waterPlatform1_1",3700,685,200,70);
 
 
   //platforms
@@ -549,18 +584,63 @@ function gameSetup() {
   createSolidObject("platform2",2600,200,150,45);
   createSolidObject("platform2",3000,140,150,45);
 
+  //Decorations
+  createNonSolidObject("arrowSign",2650,150,70,70);
+  createNonSolidObject("tree3",3470,51,140,190);
+
   //Enemies
-  //createEnemy(3070,400,120,120,7,3,"Range Enemy 1",170,0.7,300);
-  //createEnemy(2670,280,120,120,7,3,"Range Enemy 1",110,0.7,300);
+  createEnemy(3070,400,120,120,7,3,"Range Enemy 1",170,0.7,300);
+  createEnemy(2670,280,120,120,7,3,"Range Enemy 1",110,0.7,300);
 
   //Trap
-  createSolidObject("spikes",3700,605,100,72);
-  createSolidObject("spikes",3800,605,100,72);
+  createSolidObject("spikes",3700,620,100,72);
+  createSolidObject("spikes",3800,620,100,72);
 
   //--SECTION 4--
   //Ground
   createSolidObject("platform1_1",3940,830,200,70);
   createSolidObject("platform1_1",4130,830,200,70);
+
+  //Trap
+  createSolidObject("spikes",4330,820,120,90);
+  createSolidObject("spikes",4440,820,120,90);
+
+  //Ground
+  createSolidObject("platform1_2",4550,830,200,70);
+  createSolidObject("platform1_2",4740,830,200,70);
+  createSolidObject("platform1_2",4930,830,200,70);
+  createSolidObject("platform1_2",5120,830,200,70);
+  createSolidObject("platform1_2",5310,830,200,70);
+  createSolidObject("platform1_1",4550,760,200,70);
+  createSolidObject("platform1_1",4740,760,200,70);
+  createSolidObject("platform1_1",4930,760,200,70);
+  createSolidObject("platform1_1",5120,760,200,70);
+  createSolidObject("platform1_1",5310,760,200,70);
+
+  createSolidObject("platform1_2",5500,870,200,70);
+  createSolidObject("platform1_2",5500,800,200,70);
+  createSolidObject("platform1_2",5500,730,200,70);
+  createSolidObject("platform1_2",5500,660,200,70);
+  createSolidObject("platform1_2",5500,590,200,70);
+  createSolidObject("platform1_1",5500,520,200,70);
+  createSolidObject("platform1_2",5690,870,200,70);
+  createSolidObject("platform1_2",5690,800,200,70);
+  createSolidObject("platform1_2",5690,730,200,70);
+  createSolidObject("platform1_2",5690,660,200,70);
+  createSolidObject("platform1_2",5690,590,200,70);
+  createSolidObject("platform1_1",5690,520,200,70);
+
+  //Decorations
+  createNonSolidObject("tree2",3960,620,160,230);
+  createNonSolidObject("lampost",4740,630,70,150);
+  createNonSolidObject("tree1",5120,530,170,250);
+  createNonSolidObject("arrowSign",5510,470,70,70);
+
+  //Enemies
+  createEnemy(4550,640,120,120,7,3,"Range Enemy 1",200,0.7,300);
+  createEnemy(4740,640,120,120,7,3,"Range Enemy 1",200,0.7,300);
+  createEnemy(4930,640,120,120,4,3,"Range Enemy 2",200,0.7,300);
+  createEnemy(5120,640,120,120,4,3,"Range Enemy 2",200,0.7,300);
 }
 
 //Secret debug controls
@@ -576,7 +656,7 @@ addEventListener("keyup", (e) => {
       startGameSound.play();
       gameSetup();
     }
-    else if(player.gameOver) {
+    else if(player.gameOver || win) {
       gameSetup();
       startGameSound.play();
       update();
@@ -598,6 +678,7 @@ addEventListener("keyup", (e) => {
       menuMusicSound.volume=0;
       startGameSound.volume=0;
       gameMusic.volume=0;
+      winSound.volume=0;
       gameMusic.pause();
     }
     else {
@@ -617,12 +698,17 @@ addEventListener("keyup", (e) => {
         menuMusicSound.volume=0.5;
         gameMusic.volume=0.07;
         startGameSound.volume=0.3;
+        winSound.volume=0.05;
         gameMusic.play();
       }
 
       pauseGameSound.play();
       update();
     }
+  }
+  if(e.key==="y" && !player.gameOver && !initialScreen) {
+    win=true;
+    winSound.play();
   }
 });
 
@@ -643,6 +729,7 @@ canvas.addEventListener('mousedown', function(e) {
       menuMusicSound.volume=0.5;
       gameMusic.volume=0.07;
       startGameSound.volume=0.3;
+      winSound.volume=0.05;
       gameMusic.play();
       mute=false;
     }
@@ -660,6 +747,7 @@ canvas.addEventListener('mousedown', function(e) {
       menuMusicSound.volume=0;
       gameMusic.volume=0;
       startGameSound.volume=0;
+      winSound.volume=0.05;
       gameMusic.pause();
       mute=true;
     }
@@ -667,16 +755,13 @@ canvas.addEventListener('mousedown', function(e) {
 });
 
 function loadImages(images, onComplete) {
-
     var loaded = 0;
-
     function onLoad() {
         loaded++;
         if (loaded == images.length) {
             onComplete();
         }
     }
-
     for (var i = 0; i < images.length; i++) {
         var img = new Image();
         img.addEventListener("load", onLoad);
