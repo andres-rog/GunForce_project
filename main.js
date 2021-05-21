@@ -8,7 +8,7 @@ let images = [
   "Game Assets/Images/Sprites/Player Character/WalkingGun/spritesheet.png",
   "Game Assets/Images/Sprites/Player Character/ShootGun/spritesheet.png",
   "Game Assets/Images/Sprites/Player Character/ReloadGun/spritesheet.png",
-  "Game Assets/Images/Sprites/Ui Sprites/KeySpritesheet.png",
+  "Game Assets/Images/Sprites/Ui Sprites/keySpritesheet.png",
   "Game Assets/Images/Sprites/Ui Sprites/HealthBar.png",
   "Game Assets/Images/Sprites/Ui Sprites/ammoSpritesheet.png",
   "Game Assets/Images/Sprites/Ui Sprites/AmmoIcon.png",
@@ -409,6 +409,7 @@ function gameSetup() {
   enemyProjectiles=[];
   sky=[];
   clouds=[];
+  water=[];
 
   //Set player conditions
   player.hp=100;
@@ -499,18 +500,34 @@ function gameSetup() {
   createSolidObject("platform1_1",2404,830,200,70);
 
   //Enemies
-  createEnemy(1600,520,120,120,7,1,"Range Enemy 2",160,0.7,500);
-  createEnemy(2320,715,120,120,7,1,"Range Enemy 2",200,0.7,500);
-  createEnemy(2200,715,120,120,7,3,"Range Enemy 1",200,0.7,300);
-  createEnemy(2000,715,120,120,7,3,"Range Enemy 1",200,0.7,300);
+  /*createEnemy(1600,520,120,120,4,1,"Range Enemy 2",160,0.7,500);
+  createEnemy(2320,715,120,120,4,1,"Range Enemy 2",200,0.7,500);
+  createEnemy(2200,715,120,120,4,3,"Range Enemy 2",200,0.7,300);
+  createEnemy(2000,715,120,120,7,3,"Range Enemy 1",200,0.7,300);*/
 
+  //--SECTION 3--
   //water
   createWaterObjects(2594,850,300,105);
   createWaterObjects(2893,850,300,105);
   createWaterObjects(3192,850,300,105);
   createWaterObjects(3491,850,300,105);
 
-  //section 3
+  //water platforms
+  createSolidObject("waterPlatform1_3",2800,810,200,70);
+  createSolidObject("waterPlatform1_2",2800,740,200,70);
+  createSolidObject("waterPlatform1_1",2800,670,200,70);
+
+  createSolidObject("waterPlatform1_3",3200,800,200,70);
+  createSolidObject("waterPlatform1_2",3200,730,200,70);
+  createSolidObject("waterPlatform1_2",3200,660,200,70);
+  createSolidObject("waterPlatform1_2",3200,590,200,70);
+  createSolidObject("waterPlatform1_1",3200,520,200,70);
+
+  //platforms
+  //createSolidObject("platform2",200,650,150,45);
+  //createSolidObject("platform2",550,500,150,45);
+  //createSolidObject("platform2",1300,500,150,45);
+
   //Section 4
 
     
