@@ -48,7 +48,7 @@ gameMusic.volume=0;
 gameMusic.loop=true;
 
 const startGameSound  = new Audio("Game Assets/Sounds/Startgame.wav");
-startGameSound.volume=0.3;
+startGameSound.volume=0;
 
 const pauseGameSound = new Audio ("Game Assets/Sounds/Pause.wav");
 pauseGameSound.volume = 0;

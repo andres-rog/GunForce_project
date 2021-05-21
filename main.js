@@ -75,6 +75,7 @@ function update(){
   if(tutorial) {
     ctx.fillStyle = 'white';
     ctx.font = "60px ArcadeClassic";
+    //ctx.font = "60px Arial";
     ctx.fillText("Press 'S' to continue", 850, 200);
     //Left Key
     if(controller.left) ctx.drawImage(keysSpriteSheet,288,0,32,32,1150,450,80,80);
@@ -217,6 +218,7 @@ function update(){
   ctx.fillStyle = 'black';
   ctx.textAlign = "center";
   ctx.font = "36px ArcadeClassic";
+  //ctx.font = "36px Arial";
   ctx.fillText(player.hp, 270, 62);
 
   //Draw player ammo
@@ -275,8 +277,10 @@ function update(){
       ctx.drawImage(darkOverlay,0,0,canvas.width,canvas.height);
       ctx.fillStyle = 'white';
       ctx.font = "100px ArcadeClassic";
+      //ctx.font = "100px Arial";
       ctx.fillText("Game Over", 800, 350);
       ctx.font = "70px ArcadeClassic";
+      //ctx.font = "70px Arial";
       ctx.fillText("Press 's' to continue", 800, 550);
 
     }
@@ -284,6 +288,7 @@ function update(){
       ctx.drawImage(darkOverlay,0,0,canvas.width,canvas.height);
       ctx.fillStyle = 'white';
       ctx.font = "150px ArcadeClassic";
+      //ctx.font = "150px Arial";
       ctx.fillText("PAUSE", 800, 450);
     }
     
@@ -436,12 +441,12 @@ function gameSetup() {
   createSkyBoxObject(canvas.width*3-100,0,canvas.width,canvas.height*2.5);
 
   //Create clouds
-  createCloudsObject(0,192,1632,708)
-  createCloudsObject(1632,192,1632,708)
-  createCloudsObject(1632,192,1632,708)
-  createCloudsObject(3264,192,1632,708)
-  createCloudsObject(4896,192,1632,708)
-  createCloudsObject(6528,192,1632,708)
+  createCloudsObject(0,192,1632,708);
+  createCloudsObject(1632,192,1632,708);
+  createCloudsObject(1632,192,1632,708);
+  createCloudsObject(3264,192,1632,708);
+  createCloudsObject(4896,192,1632,708);
+  createCloudsObject(6528,192,1632,708);
 
   //Create map
   //--SECTION 1--
@@ -511,49 +516,51 @@ function gameSetup() {
   createWaterObjects(2893,850,300,105);
   createWaterObjects(3192,850,300,105);
   createWaterObjects(3491,850,300,105);
+  createWaterObjects(3640,850,300,105);
 
   //water platforms
   createSolidObject("waterPlatform1_3",2800,810,200,70);
   createSolidObject("waterPlatform1_2",2800,740,200,70);
   createSolidObject("waterPlatform1_1",2800,670,200,70);
 
-  createSolidObject("waterPlatform1_3",3200,800,200,70);
-  createSolidObject("waterPlatform1_2",3200,730,200,70);
-  createSolidObject("waterPlatform1_2",3200,660,200,70);
-  createSolidObject("waterPlatform1_2",3200,590,200,70);
-  createSolidObject("waterPlatform1_1",3200,520,200,70);
+  createSolidObject("waterPlatform1_3",3100,800,200,70);
+  createSolidObject("waterPlatform1_2",3100,730,200,70);
+  createSolidObject("waterPlatform1_2",3100,660,200,70);
+  createSolidObject("waterPlatform1_2",3100,590,200,70);
+  createSolidObject("waterPlatform1_1",3100,520,200,70);
+
+  createSolidObject("waterPlatform1_3",3450,800,200,70);
+  createSolidObject("waterPlatform1_2",3450,730,200,70);
+  createSolidObject("waterPlatform1_2",3450,660,200,70);
+  createSolidObject("waterPlatform1_2",3450,590,200,70);
+  createSolidObject("waterPlatform1_2",3450,520,200,70);
+  createSolidObject("waterPlatform1_2",3450,450,200,70);
+  createSolidObject("waterPlatform1_2",3450,380,200,70);
+  createSolidObject("waterPlatform1_2",3450,310,200,70);
+  createSolidObject("waterPlatform1_1",3450,240,200,70);
+
+  createSolidObject("waterPlatform1_3",3700,810,200,70);
+  createSolidObject("waterPlatform1_2",3700,740,200,70);
+  createSolidObject("waterPlatform1_1",3700,670,200,70);
+
 
   //platforms
-  //createSolidObject("platform2",200,650,150,45);
-  //createSolidObject("platform2",550,500,150,45);
-  //createSolidObject("platform2",1300,500,150,45);
+  createSolidObject("platform2",2700,400,150,45);
+  createSolidObject("platform2",2600,200,150,45);
+  createSolidObject("platform2",3000,140,150,45);
 
-  //Section 4
+  //Enemies
+  //createEnemy(3070,400,120,120,7,3,"Range Enemy 1",170,0.7,300);
+  //createEnemy(2670,280,120,120,7,3,"Range Enemy 1",110,0.7,300);
 
-    
-  //ground
-  /*createSolidObject("platform2",200,650,200,60);
-  createSolidObject("platform1_1",600,520,200,70);
-  createSolidObject("platform1_2",600,600,200,91);
-  createSolidObject("platform1_3",600,700,200,42);
+  //Trap
+  createSolidObject("spikes",3700,605,100,72);
+  createSolidObject("spikes",3800,605,100,72);
 
-  createSolidObject("waterPlatform1_1",1200,520,200,70);
-  createSolidObject("waterPlatform1_2",1200,600,200,91);
-  createSolidObject("waterPlatform1_3",1200,700,200,42);
-
-    
-
-  
-
-  createSolidObject("platform1_1",0,890,4000,100);
-
-  createNonSolidObject("tree1",1500,500,270,330);
-  createNonSolidObject("tree2",1900,500,270,315);
-  createNonSolidObject("tree3",2300,500,186,282);
-
-  createNonSolidObject("arrowSign",2600,700,100,100);
-
-  createNonSolidObject("lampost",2800,500,105,195);*/
+  //--SECTION 4--
+  //Ground
+  createSolidObject("platform1_1",3940,830,200,70);
+  createSolidObject("platform1_1",4130,830,200,70);
 }
 
 //Secret debug controls
@@ -589,6 +596,7 @@ addEventListener("keyup", (e) => {
       lightShotSound.volume = 0;
       lightShotSound.volume = 0;
       menuMusicSound.volume=0;
+      startGameSound.volume=0;
       gameMusic.volume=0;
       gameMusic.pause();
     }
@@ -608,6 +616,7 @@ addEventListener("keyup", (e) => {
         lightShotSound.volume = 0.25;
         menuMusicSound.volume=0.5;
         gameMusic.volume=0.07;
+        startGameSound.volume=0.3;
         gameMusic.play();
       }
 
@@ -633,6 +642,7 @@ canvas.addEventListener('mousedown', function(e) {
       lightShotSound.volume = 0.25;
       menuMusicSound.volume=0.5;
       gameMusic.volume=0.07;
+      startGameSound.volume=0.3;
       gameMusic.play();
       mute=false;
     }
@@ -649,6 +659,7 @@ canvas.addEventListener('mousedown', function(e) {
       lightShotSound.volume = 0;
       menuMusicSound.volume=0;
       gameMusic.volume=0;
+      startGameSound.volume=0;
       gameMusic.pause();
       mute=true;
     }
