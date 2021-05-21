@@ -1,1 +1,5 @@
 @import url('http://fonts.cdnfonts.com/css/arcade-classic');
+
+body {
+    background-color: rgb(29, 29, 29);
+}

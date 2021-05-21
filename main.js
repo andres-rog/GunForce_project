@@ -341,7 +341,7 @@ function initialScrenSetup() {
   player.reloadGunSpriteSheet = loadedImages["Game Assets/Images/Sprites/Player Character/ReloadGun/spritesheet.png"]
 
   //UI Images
-  keysSpriteSheet = loadedImages["Game Assets/Images/Sprites/Ui Sprites/KeySpritesheet.png"];
+  keysSpriteSheet = loadedImages["Game Assets/Images/Sprites/Ui Sprites/keySpritesheet.png"];
   healthbar = loadedImages["Game Assets/Images/Sprites/Ui Sprites/HealthBar.png"];
   ammobar = loadedImages["Game Assets/Images/Sprites/Ui Sprites/ammoSpritesheet.png"];
   ammoicon = loadedImages["Game Assets/Images/Sprites/Ui Sprites/AmmoIcon.png"];
